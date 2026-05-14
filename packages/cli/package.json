@@ -1,0 +1,50 @@
+{
+  "name": "@ownsurface/cli",
+  "version": "1.0.0",
+  "description": "OwnSurface CLI — See through any website. Security scanner, tech stack detection, and offensive testing from your terminal.",
+  "type": "module",
+  "bin": {
+    "ownsurface": "dist/index.js",
+    "os": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://ownsurface.com",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "security",
+    "scanner",
+    "vulnerability",
+    "mcp",
+    "offensive-security",
+    "ownsurface",
+    "pentest",
+    "website-intelligence"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@ownsurface/cli": "^1.0.0",
+    "@ownsurface/mcp-server": "2.1.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "ora": "^8.0.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

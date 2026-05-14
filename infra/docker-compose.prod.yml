@@ -1,0 +1,104 @@
+services:
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - /data/postgres:/var/lib/postgresql/data
+
+  dragonfly:
+    command: ["--maxmemory", "1gb", "--snapshot_cron", "*/30 * * * *", "--requirepass", "${DRAGONFLY_PASSWORD:?DRAGONFLY_PASSWORD must be set}"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${DRAGONFLY_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - /data/dragonfly:/data
+
+  nats:
+    command: ["--js", "--sd", "/data", "-m", "8222", "--user", "${NATS_USER:-xrayai}", "--pass", "${NATS_PASSWORD:?NATS_PASSWORD must be set}"]
+    volumes:
+      - /data/nats:/data
+
+  api:
+    image: ${ECR_REGISTRY:-363076774198.dkr.ecr.ap-south-1.amazonaws.com}/xrayai/api:latest
+    environment:
+      RUST_ENV: production
+      RUST_LOG: info
+      METRICS_TOKEN: ${METRICS_TOKEN:?METRICS_TOKEN must be set for production}
+      DATABASE_URL: ${DATABASE_URL}
+      DRAGONFLY_URL: redis://:${DRAGONFLY_PASSWORD}@dragonfly:6379
+      NATS_URL: nats://${NATS_USER:-xrayai}:${NATS_PASSWORD}@nats:4222
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_ALLOWED_PRICE_IDS: ${STRIPE_ALLOWED_PRICE_IDS:-}
+      BREVO_API_KEY: ${BREVO_API_KEY}
+      BREVO_FROM_EMAIL: ${BREVO_FROM_EMAIL:-no-reply@ownsurface.com}
+      BREVO_FROM_NAME: ${BREVO_FROM_NAME:-OwnSurface}
+      OTP_HMAC_SECRET: ${OTP_HMAC_SECRET}
+      OTP_TTL_SECONDS: ${OTP_TTL_SECONDS:-600}
+      OTP_RESEND_COOLDOWN_SECONDS: ${OTP_RESEND_COOLDOWN_SECONDS:-60}
+      SESSION_COOKIE_SECURE: "true"
+      SESSION_COOKIE_SAME_SITE: lax
+      SESSION_COOKIE_DOMAIN: .ownsurface.com
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_BEDROCK_REGION: ${AWS_BEDROCK_REGION:-us-east-1}
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+    restart: always
+
+  worker:
+    image: ${ECR_REGISTRY:-363076774198.dkr.ecr.ap-south-1.amazonaws.com}/xrayai/worker:latest
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./scripts:/opt/scripts:ro
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NATS_URL: nats://${NATS_USER:-xrayai}:${NATS_PASSWORD}@nats:4222
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+      ENABLE_AI_SUMMARY: ${ENABLE_AI_SUMMARY:-true}
+      OFFENSIVE_TOOLS_ENABLED: "true"
+      AWS_BEDROCK_REGION: ${AWS_BEDROCK_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 3G
+    restart: always
+
+  cron:
+    image: ${ECR_REGISTRY:-363076774198.dkr.ecr.ap-south-1.amazonaws.com}/xrayai/cron:latest
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NATS_URL: nats://${NATS_USER:-xrayai}:${NATS_PASSWORD}@nats:4222
+      DRAGONFLY_URL: redis://:${DRAGONFLY_PASSWORD}@dragonfly:6379
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      BREVO_FROM_EMAIL: ${BREVO_FROM_EMAIL:-no-reply@ownsurface.com}
+      BREVO_FROM_NAME: ${BREVO_FROM_NAME:-OwnSurface}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    container_name: xrayai-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - api
+    networks:
+      - xrayai-net
+    restart: always

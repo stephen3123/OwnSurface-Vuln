@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OwnSurface — Complete Platform Documentation</title>
+<style>
+  @page { margin: 2cm; size: A4; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #1a1a2e; max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+  h1 { font-size: 28px; border-bottom: 3px solid #0891b2; padding-bottom: 12px; color: #0f172a; margin-top: 0; }
+  h2 { font-size: 22px; margin-top: 48px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: #0f172a; page-break-after: avoid; }
+  h3 { font-size: 17px; margin-top: 32px; color: #334155; page-break-after: avoid; }
+  h4 { font-size: 15px; margin-top: 24px; color: #475569; }
+  p { margin: 8px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 13px; page-break-inside: avoid; }
+  th { background: #0f172a; color: white; padding: 8px 12px; text-align: left; font-weight: 600; }
+  td { padding: 6px 12px; border-bottom: 1px solid #e2e8f0; }
+  tr:nth-child(even) { background: #f8fafc; }
+  code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: 'SF Mono', Monaco, Consolas, monospace; }
+  pre { background: #0f172a; color: #e2e8f0; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; page-break-inside: avoid; }
+  pre code { background: none; padding: 0; color: inherit; }
+  hr { border: none; border-top: 2px solid #e2e8f0; margin: 40px 0; }
+  ul, ol { padding-left: 24px; }
+  li { margin: 4px 0; }
+  a { color: #0891b2; text-decoration: none; }
+  strong { color: #0f172a; }
+</style>
+</head>
+<body>
+<h1>OwnSurface — Complete Platform Documentation</h1>
+<h2>What Is OwnSurface?</h2>
+<p>OwnSurface lets you scan any website, discover its full technology stack, test your own domains for security vulnerabilities, and monitor everything from one platform. Point it at any URL and get instant intelligence — from what frameworks a site uses to whether it has SQL injection flaws, exposed secrets, or misconfigured cloud buckets.</p>
+<p>For your own verified domains, OwnSurface goes deeper: run offensive penetration tests (SQLi, XSS, CSRF, SSRF, auth bypass), crawl every page with a headless browser, map your full attack surface, monitor uptime and SSL certificates, check compliance, and generate security reports — all without installing 17 separate tools.</p>
+<h3>Key Capabilities</h3>
+<ul>
+<li><strong>Website Intelligence</strong> — Scan any URL to detect tech stack, company info, SEO, traffic, social links, and business signals. Replaces BuiltWith, Wappalyzer, SimilarWeb, Clearbit, and SecurityHeaders in one scan.</li>
+<li><strong>Vulnerability Detection</strong> — 29 scanner modules check for exposed files, CVEs, insecure headers, CORS misconfigurations, DNS security issues, leaked secrets, and more.</li>
+<li><strong>Offensive Security Testing</strong> — 22 penetration testing modules powered by industry tools (sqlmap, dalfox, subfinder, nuclei, ffuf, naabu, gitleaks) with automatic safety controls. Test for SQL injection, XSS, CSRF, SSRF, JWT flaws, auth bypass, path traversal, IDOR, subdomain takeover, open ports, cloud bucket misconfigs, and more.</li>
+<li><strong>Attack Surface Mapping</strong> — 4-tier audit: passive reconnaissance, active probing, Nuclei vulnerability scanning, and offensive testing with AI-generated summary.</li>
+<li><strong>Monitoring</strong> — Uptime checks, SSL certificate expiry tracking, and Core Web Vitals performance monitoring with alerts.</li>
+<li><strong>Lead Intelligence</strong> — Search companies by tech stack, industry, employee count, and location. Export leads as CSV. Clearbit alternative built into every scan.</li>
+<li><strong>AI Visibility</strong> — Check how your brand appears in AI model responses (ChatGPT, Claude, etc.).</li>
+<li><strong>Compliance Auditing</strong> — Check domains against GDPR, CCPA, HIPAA and other regulations.</li>
+<li><strong>CI/CD Integration</strong> — SARIF output, --fail-on severity gates, and a GitHub Action to block deployments on critical findings.</li>
+</ul>
+<h3>Available On Five Surfaces</h3>
+<p>All features are powered by one unified REST API. The dashboard, Chrome extension, CLI, MCP server, and direct API access are different windows into the same platform — a scan triggered from the CLI returns the same result as one from the dashboard.</p>
+<hr>
+<h2>Platform Surfaces</h2>
+<h3>1. Dashboard (Web App)</h3>
+<ul>
+<li>URL: app.ownsurface.com</li>
+<li>Stack: Next.js 16, React 19, Tailwind 4, Recharts</li>
+<li>63 pages covering scanning, monitoring, intelligence, compliance, social features, and account management</li>
+</ul>
+<h3>2. Chrome Extension</h3>
+<ul>
+<li>Name: &quot;OwnSurface - Website Intelligence&quot;</li>
+<li>Manifest V3, React, Vite</li>
+<li>One-click scan of the current tab</li>
+<li>Shows scan quota (Free: X/5, Pro: unlimited)</li>
+<li>Dark theme UI with security grade, tech stack, and findings</li>
+</ul>
+<h3>3. CLI (Terminal)</h3>
+<ul>
+<li>Package: @ownsurface/cli</li>
+<li>Binary: <code>ownsurface</code> (alias: <code>os</code>)</li>
+<li>23 commands covering auth, scanning, enrichment, monitoring, leads, compliance, and troubleshooting</li>
+<li>Interactive prompts when arguments are missing</li>
+<li>Verified domain picker for commands that need it</li>
+<li>SARIF output for CI/CD integration</li>
+<li>Ray the Stingray mascot with blinking animation</li>
+</ul>
+<h3>4. MCP Server (AI Agents)</h3>
+<ul>
+<li>Package: @ownsurface/mcp-server (v2.1.0)</li>
+<li>Binary: <code>ownsurface-mcp</code></li>
+<li>28 tools for Claude, Cursor, and any MCP-compatible AI agent</li>
+<li>Also accessible via <code>ownsurface --mcp</code> from the CLI</li>
+<li>Tools include workflow hints so AI agents know to verify domains before offensive scanning</li>
+</ul>
+<h3>5. REST API</h3>
+<ul>
+<li>URL: api.ownsurface.com</li>
+<li>Stack: Rust (Axum), PostgreSQL (sqlx), Dragonfly (Redis), NATS</li>
+<li>103 endpoints</li>
+<li>Authentication: JWT (Bearer token) or API key (X-Api-Key header)</li>
+<li>Rate limiting per plan</li>
+</ul>
+<hr>
+<h2>How a Scan Works (End-to-End Flow)</h2>
+<ol>
+<li>User submits a URL from any surface (dashboard, extension, CLI, MCP, or API)</li>
+<li>API server receives the request at POST /api/v1/scan</li>
+<li>API checks Dragonfly cache using a SHA-256 hash of the normalized URL</li>
+<li>If cached (within 24 hours), the cached result is returned immediately</li>
+<li>If not cached, the API publishes a <code>scan.request</code> message to NATS with the URL and hash</li>
+<li>A worker picks up the message from the NATS queue (load-balanced across workers)</li>
+<li>The worker launches a Playwright browser and runs all 29 scanner modules in parallel</li>
+<li>Sequential post-processing runs: CVE matching (needs tech stack), Lighthouse scores (needs performance data), carbon footprint (needs page weight + traffic), AI summary (needs all results)</li>
+<li>The worker publishes the complete result to <code>scan.result.{hash}</code> on NATS</li>
+<li>The API receives the result, caches it in Dragonfly with a 24-hour TTL, and stores it in PostgreSQL</li>
+<li>The result is returned to the user</li>
+</ol>
+<p>The same flow applies to all surfaces. The CLI, MCP, extension, and dashboard all call the same API endpoint. The only difference is how the result is displayed.</p>
+<hr>
+<h2>Scanner Modules (29 Standard)</h2>
+<p>Every scan runs these modules in parallel:</p>
+<h3>Core Intelligence</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>What It Detects</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tech Detection</td>
+<td>Frameworks (React, Next.js, Vue, Angular), CMS (WordPress, Shopify), hosting, CDN, payments, analytics</td>
+</tr>
+<tr>
+<td>Security Analysis</td>
+<td>SSL/TLS validity, security headers (CSP, HSTS, X-Frame-Options), grade A+ to F, HTTPS redirect</td>
+</tr>
+<tr>
+<td>Company Metadata</td>
+<td>Name, description, logo, industry, founding date, location, employee count (from OpenGraph)</td>
+</tr>
+<tr>
+<td>Social Links</td>
+<td>Twitter/X, LinkedIn, Facebook, Instagram, YouTube, GitHub, TikTok, Discord, Reddit, Medium, Pinterest, Threads, Mastodon</td>
+</tr>
+<tr>
+<td>SEO Analysis</td>
+<td>Meta title/description, sitemap, robots.txt, heading structure, structured data, canonical URL, domain age, SEO score</td>
+</tr>
+<tr>
+<td>Business Signals</td>
+<td>Pricing pages, careers pages, ad pixels (Google/Facebook), chat widgets, payment processors, hiring indicators, monetization signals</td>
+</tr>
+<tr>
+<td>Traffic Estimation</td>
+<td>Tranco rank, traffic tier, CrUX Core Web Vitals, estimated monthly visits</td>
+</tr>
+<tr>
+<td>Clone Detection</td>
+<td>Template/theme detection (ThemeForest, TemplateMonster), structural hash</td>
+</tr>
+</tbody></table>
+<h3>Vulnerability Scanning</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>What It Detects</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Sensitive Files</td>
+<td>.env, .git, AWS credentials, SSH keys, wp-config.php, database dumps, CI configs — 113 paths checked</td>
+</tr>
+<tr>
+<td>CVE Matching</td>
+<td>Known vulnerabilities for detected technologies via NVD API, with CVSS vectors and exploit availability</td>
+</tr>
+<tr>
+<td>Cookie Audit</td>
+<td>Missing HttpOnly, Secure, SameSite flags</td>
+</tr>
+<tr>
+<td>CORS Check</td>
+<td>Wildcard origins, null origin, credentials with wildcard</td>
+</tr>
+<tr>
+<td>DNS Security</td>
+<td>SPF, DMARC (graded A-F), DKIM, DNSSEC, BIMI, MTA-STS</td>
+</tr>
+<tr>
+<td>Admin Panels</td>
+<td>Exposed admin paths (/admin, /wp-admin, /panel) and S3 bucket patterns</td>
+</tr>
+</tbody></table>
+<h3>Intelligence</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>What It Detects</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Privacy/GDPR</td>
+<td>Cookie consent banners, tracking scripts, privacy policy, terms page, GDPR compliance score</td>
+</tr>
+<tr>
+<td>Wayback History</td>
+<td>Internet Archive snapshots, first/last capture date, snapshot count by year</td>
+</tr>
+<tr>
+<td>JS Bundle Analysis</td>
+<td>JavaScript files, bundle sizes, exposed source maps, largest bundles</td>
+</tr>
+<tr>
+<td>API Discovery</td>
+<td>REST, GraphQL, Swagger, OpenAPI endpoint detection</td>
+</tr>
+<tr>
+<td>Supply Chain</td>
+<td>External script/style/iframe dependencies, CDN status, domain age, risk levels</td>
+</tr>
+</tbody></table>
+<h3>Performance and Sustainability</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>What It Detects</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Performance</td>
+<td>LCP, FID, CLS, TTFB, page weight, render-blocking resources</td>
+</tr>
+<tr>
+<td>Accessibility</td>
+<td>WCAG audit — language attribute, skip links, missing alt text, missing input labels</td>
+</tr>
+<tr>
+<td>Lighthouse Scores</td>
+<td>Synthetic scores for performance, accessibility, best practices, SEO</td>
+</tr>
+<tr>
+<td>Carbon Footprint</td>
+<td>CO2 per visit (Sustainable Web Design model), green hosting status, sustainability grade</td>
+</tr>
+</tbody></table>
+<h3>Passive Security</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>What It Detects</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Passive Secrets</td>
+<td>50+ regex patterns for API keys, AWS credentials, Stripe keys, tokens in HTML</td>
+</tr>
+<tr>
+<td>Passive WAF Detection</td>
+<td>14 WAF providers identified via response headers/cookies (Cloudflare, AWS WAF, Akamai, Imperva, etc.)</td>
+</tr>
+<tr>
+<td>GraphQL Detection</td>
+<td>Endpoint probing (8 common paths), introspection status, playground detection, engine identification</td>
+</tr>
+</tbody></table>
+<h3>Post-Processing</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Security Findings</td>
+<td>Converts security issues into actionable findings with copy-paste fix configs for nginx, Apache, Cloudflare, Vercel, Netlify</td>
+</tr>
+<tr>
+<td>Email Patterns</td>
+<td>Email address extraction, format inference (firstname.lastname@domain), team/contact page discovery</td>
+</tr>
+<tr>
+<td>AI Summary</td>
+<td>AWS Bedrock Claude analysis with rule-based fallback — executive summary covering business intelligence, security posture, technical maturity</td>
+</tr>
+<tr>
+<td>Cost Estimate</td>
+<td>Infrastructure cost estimation based on detected tech stack</td>
+</tr>
+<tr>
+<td>Competitors</td>
+<td>Similar companies based on tech stack and industry</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Offensive Scanning (22 Modules)</h2>
+<p>Offensive scanning requires domain verification and a Pro plan. All modules are safely executed via the ToolRunner subprocess system using execFile (no shell injection). A ScanSafety controller automatically stops scans on WAF detection, target distress, or excessive errors.</p>
+<h3>Phase 3: Core Vulnerabilities</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>What It Tests</th>
+<th>External Tool</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SQL Injection</td>
+<td>Error-based, time-based blind, deep mode</td>
+<td>sqlmap</td>
+<td>Critical (CVSS 9.8)</td>
+</tr>
+<tr>
+<td>XSS</td>
+<td>Reflected XSS with custom payloads</td>
+<td>dalfox</td>
+<td>High (CVSS 6.1)</td>
+</tr>
+<tr>
+<td>CSRF</td>
+<td>Form token validation on POST/PUT/PATCH forms</td>
+<td>xsrfprobe</td>
+<td>High (CVSS 8.0)</td>
+</tr>
+<tr>
+<td>SSRF</td>
+<td>Internal IP probing, AWS/GCP metadata endpoints</td>
+<td>ssrfmap</td>
+<td>Critical (CVSS 9.8)</td>
+</tr>
+<tr>
+<td>JWT Security</td>
+<td>&quot;none&quot; algorithm, expired tokens, weak secrets</td>
+<td>jwt_tool</td>
+<td>Critical (CVSS 9.8)</td>
+</tr>
+<tr>
+<td>Auth Bypass</td>
+<td>Path manipulation, verb tampering, header injection</td>
+<td>custom</td>
+<td>Critical (CVSS 9.1)</td>
+</tr>
+</tbody></table>
+<h3>Phase 4: Discovery and Reconnaissance</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>What It Tests</th>
+<th>External Tool</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Subdomain Discovery</td>
+<td>Multi-source enumeration + live host probing</td>
+<td>subfinder, httpx</td>
+</tr>
+<tr>
+<td>Subdomain Takeover</td>
+<td>Dangling CNAME records, vulnerable cloud services</td>
+<td>subjack, baddns</td>
+</tr>
+<tr>
+<td>Port Scanning</td>
+<td>SYN scan on top 1000 ports</td>
+<td>naabu</td>
+</tr>
+<tr>
+<td>Directory Brute-Force</td>
+<td>Common paths with SecLists wordlists</td>
+<td>ffuf</td>
+</tr>
+<tr>
+<td>Cloud Buckets</td>
+<td>S3, GCS, Azure bucket misconfiguration</td>
+<td>s3scanner</td>
+</tr>
+<tr>
+<td>Secret Scanning</td>
+<td>Pattern-based + entropy-based detection in JS bundles</td>
+<td>gitleaks, trufflehog</td>
+</tr>
+<tr>
+<td>Active WAF Detection</td>
+<td>Fingerprinting with crafted payloads</td>
+<td>whatwaf</td>
+</tr>
+</tbody></table>
+<h3>Phase 5: Application Layer</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>What It Tests</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Path Traversal / LFI</td>
+<td>File-related parameter exploitation with 12 bypass payloads</td>
+<td>Critical (CVSS 9.1)</td>
+</tr>
+<tr>
+<td>Open Redirect</td>
+<td>Redirect parameter exploitation with 15 payload variants</td>
+<td>Medium (CVSS 6.1)</td>
+</tr>
+<tr>
+<td>IDOR</td>
+<td>Sequential ID manipulation with response diffing</td>
+<td>High (CVSS 7.5)</td>
+</tr>
+<tr>
+<td>Rate Limit Testing</td>
+<td>15-request burst against login/register/forgot-password</td>
+<td>Medium (CVSS 5.3)</td>
+</tr>
+<tr>
+<td>User Enumeration</td>
+<td>Status code, response size, error message, and timing differentials</td>
+<td>Medium (CVSS 5.3)</td>
+</tr>
+<tr>
+<td>Session Security</td>
+<td>Cookie flags (HttpOnly, Secure, SameSite), token entropy</td>
+<td>Medium-High</td>
+</tr>
+<tr>
+<td>GraphQL Security</td>
+<td>Introspection, depth/complexity limits, batch abuse</td>
+<td>Variable</td>
+</tr>
+<tr>
+<td>API Fuzzing</td>
+<td>SQL injection, XSS, path traversal payloads against endpoints</td>
+<td>Medium (CVSS 5.3)</td>
+</tr>
+</tbody></table>
+<h3>Safety Controls</h3>
+<ul>
+<li>Domain verification checked at both API and worker level (defense-in-depth)</li>
+<li>Max request rate: 20 requests per second</li>
+<li>Max total requests: 5,000 per scan</li>
+<li>Auto-stop on: WAF detection (403/429), target response time above 15 seconds, 10 consecutive errors</li>
+<li>Per-domain locking: only 1 concurrent offensive scan per domain</li>
+<li>Rate limiting: conservative (500ms), moderate (200ms), aggressive (50ms) delay between requests</li>
+<li>All tools spawned via execFile with 120-second timeout and 50MB stdout cap</li>
+<li>Input sanitization blocks private IP ranges, shell metacharacters, and path traversal</li>
+</ul>
+<hr>
+<h2>CLI Commands (23 Total)</h2>
+<h3>Authentication</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ownsurface login</code></td>
+<td>Interactive email/password login. Creates a CLI API key and saves to ~/.ownsurface/config.json</td>
+</tr>
+<tr>
+<td><code>ownsurface login --api-key &lt;key&gt;</code></td>
+<td>Login with existing API key. Validates via /auth/me</td>
+</tr>
+<tr>
+<td><code>ownsurface logout</code></td>
+<td>Deletes ~/.ownsurface/config.json</td>
+</tr>
+<tr>
+<td><code>ownsurface whoami</code></td>
+<td>Shows email, name, plan, masked API key</td>
+</tr>
+<tr>
+<td><code>ownsurface status</code></td>
+<td>Full overview: account, verified domains, uptime/SSL monitors, recent alerts</td>
+</tr>
+<tr>
+<td><code>ownsurface doctor</code></td>
+<td>Checks API key, API reachability, account validity, verified domains, CLI version</td>
+</tr>
+</tbody></table>
+<h3>Scanning</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ownsurface scan &lt;url&gt;</code></td>
+<td>Full scan. Supports --json, --format sarif, --fail-on severity, --quiet</td>
+</tr>
+<tr>
+<td><code>ownsurface deep-scan &lt;domain&gt;</code></td>
+<td>Playwright crawl (10-500 pages). Polls until complete. Pro + verified domain</td>
+</tr>
+<tr>
+<td><code>ownsurface attack-surface &lt;domain&gt;</code></td>
+<td>4-tier audit (passive, active, nuclei, offensive). Pro + verified domain</td>
+</tr>
+<tr>
+<td><code>ownsurface offensive-scan &lt;domain&gt;</code></td>
+<td>Offensive testing with --sqli, --xss, --csrf, --ssrf, --auth flags. Supports --dry-run. Pro + verified domain</td>
+</tr>
+<tr>
+<td><code>ownsurface bulk &lt;file&gt;</code></td>
+<td>Batch scan URLs from file (one per line or CSV first column)</td>
+</tr>
+<tr>
+<td><code>ownsurface history &lt;url&gt;</code></td>
+<td>Past scan results for a URL</td>
+</tr>
+<tr>
+<td><code>ownsurface report &lt;url&gt;</code></td>
+<td>Generate security report with shareable link. Pro</td>
+</tr>
+<tr>
+<td><code>ownsurface cancel &lt;id&gt;</code></td>
+<td>Cancel running scan. Auto-detects type or use --type flag</td>
+</tr>
+</tbody></table>
+<h3>Intelligence</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ownsurface enrich &lt;domain&gt;</code></td>
+<td>Company, tech stack, security, social links. Supports --only company/tech/security. Pro</td>
+</tr>
+<tr>
+<td><code>ownsurface leads --tech &lt;tech&gt;</code></td>
+<td>Search leads by technology, industry, employees, location. Pro</td>
+</tr>
+<tr>
+<td><code>ownsurface compliance &lt;domain&gt;</code></td>
+<td>Compliance audit (GDPR, CCPA, HIPAA). Pro</td>
+</tr>
+<tr>
+<td><code>ownsurface ai-visibility &lt;domain&gt;</code></td>
+<td>Check how domain appears in AI responses. Supports --brand. Pro</td>
+</tr>
+</tbody></table>
+<h3>Domain Management</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ownsurface verify &lt;domain&gt;</code></td>
+<td>Start domain verification (DNS TXT or file method)</td>
+</tr>
+<tr>
+<td><code>ownsurface domains</code></td>
+<td>List all verified domains</td>
+</tr>
+</tbody></table>
+<h3>Monitoring</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ownsurface monitor uptime &lt;domain&gt;</code></td>
+<td>Create uptime monitor. --interval seconds (default 300). Pro</td>
+</tr>
+<tr>
+<td><code>ownsurface monitor ssl &lt;domain&gt;</code></td>
+<td>Create SSL certificate monitor. --alert-days (default 30). Pro</td>
+</tr>
+<tr>
+<td><code>ownsurface monitor status</code></td>
+<td>Show all monitors, their status, and recent alerts</td>
+</tr>
+</tbody></table>
+<h3>Global Options</h3>
+<ul>
+<li><code>--api-key &lt;key&gt;</code> — Override stored API key for this command</li>
+<li><code>--json</code> — Raw JSON output for piping</li>
+<li><code>--quiet</code> — Suppress spinners and decorations (for scripting)</li>
+<li><code>--fail-on &lt;severity&gt;</code> — Exit code 1 if findings at or above: critical, high, medium, low</li>
+<li><code>--format sarif</code> — SARIF 2.1.0 output for GitHub Advanced Security</li>
+</ul>
+<h3>Config Priority</h3>
+<ol>
+<li>--api-key flag (highest)</li>
+<li>OWNSURFACE_API_KEY environment variable</li>
+<li>~/.ownsurface/config.json</li>
+<li>~/.xrayrc (legacy fallback)</li>
+</ol>
+<h3>Interactive Behavior</h3>
+<ul>
+<li>If a required argument is missing, the CLI prompts interactively instead of erroring</li>
+<li>Commands requiring verified domains (deep-scan, attack-surface, offensive-scan, monitor, compliance, ai-visibility) show a numbered list of your verified domains to pick from</li>
+<li>URLs auto-normalize: typing <code>stripe.com</code> is equivalent to <code>https://stripe.com</code></li>
+<li>After a scan completes, the CLI suggests next steps based on findings severity</li>
+<li>Common API errors are caught and translated to actionable messages (e.g., &quot;Domain not verified. Run: ownsurface verify <domain>&quot;)</li>
+</ul>
+<hr>
+<h2>MCP Tools (28 Total)</h2>
+<h3>Core Scanning (7 tools — no requirements)</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>scan_website</td>
+<td>Full scan of any URL — returns tech, security, SEO, company, traffic, carbon, AI summary</td>
+</tr>
+<tr>
+<td>get_tech_stack</td>
+<td>Technology detection for any domain</td>
+</tr>
+<tr>
+<td>check_security</td>
+<td>Security grade, headers, SSL, vulnerabilities, fix configs</td>
+</tr>
+<tr>
+<td>get_company_info</td>
+<td>Company name, industry, employees, social links, email patterns (Clearbit alternative)</td>
+</tr>
+<tr>
+<td>compare_websites</td>
+<td>Side-by-side comparison of two URLs</td>
+</tr>
+<tr>
+<td>get_scan_history</td>
+<td>Historical scans for a URL</td>
+</tr>
+<tr>
+<td>check_carbon</td>
+<td>CO2 per visit, sustainability grade, green hosting</td>
+</tr>
+</tbody></table>
+<h3>Reconnaissance (2 tools)</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ownsurface_find_subdomains</td>
+<td>Subdomain enumeration via VirusTotal, Shodan, Censys, certificate transparency</td>
+</tr>
+<tr>
+<td>ownsurface_check_exposed_files</td>
+<td>Check for .env, .git, backups, configs — 70+ sensitive paths</td>
+</tr>
+</tbody></table>
+<h3>Security Detail (2 tools)</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ownsurface_check_headers</td>
+<td>HTTP security headers with fix configs for nginx, Apache, Cloudflare, Vercel, Netlify</td>
+</tr>
+<tr>
+<td>ownsurface_check_dns</td>
+<td>SPF, DKIM, DMARC grading (A-F), DNSSEC, BIMI, MTA-STS</td>
+</tr>
+</tbody></table>
+<h3>Advanced Scanning (5 tools — Pro required)</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ownsurface_attack_surface</td>
+<td>4-tier audit with AI summary. Requires verified domain</td>
+</tr>
+<tr>
+<td>ownsurface_deep_scan</td>
+<td>Playwright crawl. Requires verified domain</td>
+</tr>
+<tr>
+<td>ownsurface_offensive_scan</td>
+<td>Full offensive suite (SQLi, XSS, CSRF, SSRF, auth). Configurable checks and rate limit. Requires verified domain</td>
+</tr>
+<tr>
+<td>ownsurface_monitor_uptime</td>
+<td>Create uptime monitor with 5-minute check interval</td>
+</tr>
+<tr>
+<td>ownsurface_generate_report</td>
+<td>Generate PDF security report</td>
+</tr>
+</tbody></table>
+<h3>Offensive Testing (3 tools — Pro + verified domain)</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ownsurface_test_sqli</td>
+<td>SQL injection testing with optional deep (sqlmap) mode</td>
+</tr>
+<tr>
+<td>ownsurface_test_xss</td>
+<td>XSS testing with Dalfox</td>
+</tr>
+<tr>
+<td>ownsurface_test_auth</td>
+<td>Auth bypass, CSRF, JWT testing combined</td>
+</tr>
+</tbody></table>
+<h3>Intelligence (4 tools — Pro required)</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ownsurface_enrich_domain</td>
+<td>Full domain enrichment — company, tech, security, social, traffic. Supports filtering by section</td>
+</tr>
+<tr>
+<td>ownsurface_search_leads</td>
+<td>Search leads by technology, industry, employees, location</td>
+</tr>
+<tr>
+<td>ownsurface_compliance_check</td>
+<td>Compliance audit (GDPR, CCPA, HIPAA)</td>
+</tr>
+<tr>
+<td>ownsurface_ai_visibility</td>
+<td>Check brand visibility in AI model responses</td>
+</tr>
+</tbody></table>
+<h3>Management (5 tools)</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ownsurface_verify_domain</td>
+<td>Start domain verification (returns DNS/file instructions)</td>
+</tr>
+<tr>
+<td>ownsurface_list_domains</td>
+<td>List user&#39;s verified domains</td>
+</tr>
+<tr>
+<td>ownsurface_bulk_scan</td>
+<td>Batch scan multiple URLs (max 500)</td>
+</tr>
+<tr>
+<td>ownsurface_monitor_ssl</td>
+<td>Create SSL certificate monitor</td>
+</tr>
+<tr>
+<td>ownsurface_cancel_scan</td>
+<td>Cancel any running scan by ID and type</td>
+</tr>
+</tbody></table>
+<h3>AI Agent Workflow</h3>
+<p>Tools that require verified domains include a hint in their description: &quot;The domain must be verified first — use ownsurface_list_domains to check, or ownsurface_verify_domain to start verification.&quot; This guides AI agents through the correct workflow automatically.</p>
+<h3>MCP Configuration</h3>
+<p>To use OwnSurface with any MCP-compatible AI tool, add to your .mcp.json:</p>
+<pre><code class="language-json">{
+  &quot;ownsurface&quot;: {
+    &quot;command&quot;: &quot;npx&quot;,
+    &quot;args&quot;: [&quot;@ownsurface/cli&quot;, &quot;--mcp&quot;],
+    &quot;env&quot;: {
+      &quot;OWNSURFACE_API_KEY&quot;: &quot;your-api-key&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>API Endpoints (103 Total)</h2>
+<h3>Public Endpoints (18 — no authentication)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GET</td>
+<td>/</td>
+<td>API root</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/health</td>
+<td>Health check (DB, Redis, NATS)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/metrics</td>
+<td>Prometheus metrics</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/auth/register</td>
+<td>Register new user</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/auth/register/verify</td>
+<td>Verify registration OTP</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/auth/register/resend</td>
+<td>Resend registration OTP</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/auth/login</td>
+<td>Login (email + password)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/auth/logout</td>
+<td>Logout</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/auth/password/request-reset</td>
+<td>Request password reset OTP</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/auth/password/confirm-reset</td>
+<td>Confirm password reset</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/reports/public/{slug}</td>
+<td>Public report by slug</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/billing/webhook</td>
+<td>Stripe webhook</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/mcp</td>
+<td>MCP manifest</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/profile/{username}</td>
+<td>Public user profile</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/badge/{domain}</td>
+<td>Security badge SVG</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/showcase</td>
+<td>Showcase scans</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/showcase/domains</td>
+<td>Showcase domains (sitemap)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/scan/site/{domain}</td>
+<td>Public scan page data</td>
+</tr>
+</tbody></table>
+<h3>Scanning (7 endpoints)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>POST</td>
+<td>/api/v1/scan</td>
+<td>Create scan</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/scan/recent</td>
+<td>Recent scans</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/scan/{hash}</td>
+<td>Get scan by hash</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/bulk</td>
+<td>Start bulk scan</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/bulk/{id}</td>
+<td>Get bulk job status</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/history/{hash}</td>
+<td>Scan history</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/radar</td>
+<td>Radar events</td>
+</tr>
+</tbody></table>
+<h3>Deep Scan (4 endpoints)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>POST</td>
+<td>/api/v1/deep-scan</td>
+<td>Start deep scan</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/deep-scan</td>
+<td>List deep scans</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/deep-scan/{id}</td>
+<td>Get deep scan</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/deep-scan/{id}/cancel</td>
+<td>Cancel deep scan</td>
+</tr>
+</tbody></table>
+<h3>Attack Surface (5 endpoints)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>POST</td>
+<td>/api/v1/attack-surface</td>
+<td>Start audit</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/attack-surface</td>
+<td>List audits</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/attack-surface/{id}</td>
+<td>Get audit</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/attack-surface/{id}/cancel</td>
+<td>Cancel audit</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/attack-surface/{id}/pair</td>
+<td>Pair with deep scan</td>
+</tr>
+</tbody></table>
+<h3>Offensive Scan (4 endpoints)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>POST</td>
+<td>/api/v1/offensive-scan</td>
+<td>Start offensive scan</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/offensive-scan</td>
+<td>List offensive scans</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/offensive-scan/{id}</td>
+<td>Get offensive scan</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/offensive-scan/{id}/cancel</td>
+<td>Cancel offensive scan</td>
+</tr>
+</tbody></table>
+<h3>Monitoring (12 endpoints)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>POST</td>
+<td>/api/v1/monitors/uptime</td>
+<td>Create uptime monitor</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/monitors/uptime</td>
+<td>List uptime monitors</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/monitors/uptime/{id}</td>
+<td>Get uptime monitor</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/api/v1/monitors/uptime/{id}</td>
+<td>Delete uptime monitor</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/monitors/ssl</td>
+<td>Create SSL monitor</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/monitors/ssl</td>
+<td>List SSL monitors</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/monitors/speed</td>
+<td>Trigger speed measurement</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/monitors/speed/{domain}</td>
+<td>Get speed history</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/monitors/reports</td>
+<td>Create scheduled report</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/monitors/reports</td>
+<td>List scheduled reports</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/monitoring/summary</td>
+<td>Monitoring summary</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/monitoring/alerts</td>
+<td>Monitoring alerts</td>
+</tr>
+</tbody></table>
+<h3>Enrichment (5 endpoints)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>POST</td>
+<td>/api/v1/enrich</td>
+<td>Full enrichment</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/enrich/{domain}</td>
+<td>Cached enrichment</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/enrich/{domain}/company</td>
+<td>Company only</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/enrich/{domain}/tech</td>
+<td>Tech stack only</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/enrich/{domain}/security</td>
+<td>Security only</td>
+</tr>
+</tbody></table>
+<h3>Domain Verification (4 endpoints)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>POST</td>
+<td>/api/v1/domains/verify</td>
+<td>Start verification</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/domains/verify/{id}/check</td>
+<td>Check status</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/domains</td>
+<td>List verified domains</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/api/v1/domains/{id}</td>
+<td>Delete domain</td>
+</tr>
+</tbody></table>
+<h3>Authentication and Account (10 endpoints)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GET</td>
+<td>/api/v1/auth/me</td>
+<td>Current user</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/auth/session</td>
+<td>Current session</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/auth/password/change</td>
+<td>Change password</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>/api/v1/auth/settings/profile</td>
+<td>Update profile</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/auth/settings/notifications</td>
+<td>Get notification preferences</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>/api/v1/auth/settings/notifications</td>
+<td>Update notification preferences</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/api/v1/auth/account</td>
+<td>Delete account</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/auth/api-key</td>
+<td>Create API key</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/auth/api-keys</td>
+<td>List API keys</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/api/v1/auth/api-keys/{id}</td>
+<td>Revoke API key</td>
+</tr>
+</tbody></table>
+<h3>Billing (2 endpoints)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>POST</td>
+<td>/api/v1/billing/checkout</td>
+<td>Create Stripe checkout session</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/billing/portal</td>
+<td>Create Stripe customer portal</td>
+</tr>
+</tbody></table>
+<h3>Social and Community (12 endpoints)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PUT</td>
+<td>/api/v1/users/profile</td>
+<td>Update own profile</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/users/{username}/scans</td>
+<td>User&#39;s public scans</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/users/{username}/badges</td>
+<td>User&#39;s badges</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/follow/user/{id}</td>
+<td>Follow user</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/api/v1/follow/user/{id}</td>
+<td>Unfollow user</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/follow/domain</td>
+<td>Follow domain</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/api/v1/follow/domain</td>
+<td>Unfollow domain</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/following</td>
+<td>List following</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/followers</td>
+<td>List followers</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/notifications</td>
+<td>List notifications</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>/api/v1/notifications/read</td>
+<td>Mark notifications read</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/leaderboard</td>
+<td>Leaderboard</td>
+</tr>
+</tbody></table>
+<h3>Watchlists and Collections (10 endpoints)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>POST</td>
+<td>/api/v1/watchlists</td>
+<td>Create watchlist</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/watchlists</td>
+<td>List watchlists</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/watchlists/{id}</td>
+<td>Get watchlist</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>/api/v1/watchlists/{id}</td>
+<td>Update watchlist</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/api/v1/watchlists/{id}</td>
+<td>Delete watchlist</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/reports</td>
+<td>Create report</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/reports</td>
+<td>List reports</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/reports/{id}</td>
+<td>Get report</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/reports/{id}/pdf</td>
+<td>Export PDF</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/achievements</td>
+<td>Achievements</td>
+</tr>
+</tbody></table>
+<h3>Intelligence (8 endpoints)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GET</td>
+<td>/api/v1/leads/search</td>
+<td>Search leads</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/leads/technologies</td>
+<td>List technologies</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/leads/export</td>
+<td>Export leads CSV</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/leads/domain/{domain}</td>
+<td>Domain profile</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/traffic/{domain}</td>
+<td>Traffic data</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/v1/ai-visibility</td>
+<td>Start AI visibility check</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/ai-visibility</td>
+<td>List checks</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/api/v1/ai-visibility/{id}</td>
+<td>Get check result</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Subscription Plans</h2>
+<h3>Free Plan</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Limit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Scans per day</td>
+<td>3</td>
+</tr>
+<tr>
+<td>All 29 scanner modules</td>
+<td>Included</td>
+</tr>
+<tr>
+<td>Bulk scan URLs per job</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Bulk jobs per month</td>
+<td>1</td>
+</tr>
+<tr>
+<td>API calls per day</td>
+<td>10</td>
+</tr>
+<tr>
+<td>API keys</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Verified domains</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Watchlists</td>
+<td>1 (max 5 URLs each)</td>
+</tr>
+<tr>
+<td>Collections</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Reports</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Lead search results</td>
+<td>3 per search</td>
+</tr>
+<tr>
+<td>Scan history retention</td>
+<td>3 days</td>
+</tr>
+<tr>
+<td>Deep scan</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>Attack surface audit</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>Offensive scanning</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>Uptime monitoring</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>SSL monitoring</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>Speed monitoring</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>Enrichment API</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>Lead export</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>AI visibility</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>Scheduled reports</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>Webhooks</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>PDF export</td>
+<td>Not available</td>
+</tr>
+</tbody></table>
+<h3>Pro Plan ($49/month or $468/year)</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Limit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Scans per day</td>
+<td>Unlimited</td>
+</tr>
+<tr>
+<td>All 29 scanner modules</td>
+<td>Included</td>
+</tr>
+<tr>
+<td>Bulk scan URLs per job</td>
+<td>1,000</td>
+</tr>
+<tr>
+<td>Bulk jobs per month</td>
+<td>Unlimited</td>
+</tr>
+<tr>
+<td>API calls per day</td>
+<td>10,000</td>
+</tr>
+<tr>
+<td>API keys</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Verified domains</td>
+<td>Unlimited</td>
+</tr>
+<tr>
+<td>Watchlists</td>
+<td>Unlimited (unlimited URLs each)</td>
+</tr>
+<tr>
+<td>Collections</td>
+<td>Unlimited</td>
+</tr>
+<tr>
+<td>Reports</td>
+<td>Unlimited</td>
+</tr>
+<tr>
+<td>Lead search results</td>
+<td>Unlimited</td>
+</tr>
+<tr>
+<td>Scan history retention</td>
+<td>365 days</td>
+</tr>
+<tr>
+<td>Deep scan</td>
+<td>Unlimited (max 500 pages per scan)</td>
+</tr>
+<tr>
+<td>Attack surface audit</td>
+<td>Unlimited (max 3 concurrent)</td>
+</tr>
+<tr>
+<td>Offensive scanning</td>
+<td>Unlimited (max 3 concurrent)</td>
+</tr>
+<tr>
+<td>Uptime monitoring</td>
+<td>Unlimited monitors (60-3600 second intervals)</td>
+</tr>
+<tr>
+<td>SSL monitoring</td>
+<td>Unlimited monitors (1-90 day alert threshold)</td>
+</tr>
+<tr>
+<td>Speed monitoring</td>
+<td>Available</td>
+</tr>
+<tr>
+<td>Enrichment API</td>
+<td>Available</td>
+</tr>
+<tr>
+<td>Lead export (CSV)</td>
+<td>Available</td>
+</tr>
+<tr>
+<td>AI visibility</td>
+<td>10 checks per month</td>
+</tr>
+<tr>
+<td>Scheduled reports</td>
+<td>Available</td>
+</tr>
+<tr>
+<td>Webhooks</td>
+<td>Available</td>
+</tr>
+<tr>
+<td>PDF export</td>
+<td>Available</td>
+</tr>
+</tbody></table>
+<h3>Legacy Plans</h3>
+<p>Database values &quot;business&quot; and &quot;enterprise&quot; are mapped to Pro internally.</p>
+<hr>
+<h2>Infrastructure</h2>
+<h3>Services</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Technology</th>
+<th>Port</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>API Server</td>
+<td>Rust (Axum)</td>
+<td>8080</td>
+<td>REST API, authentication, rate limiting</td>
+</tr>
+<tr>
+<td>Worker</td>
+<td>Node.js, Playwright</td>
+<td>—</td>
+<td>Scan processing, browser automation</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td>Next.js 16</td>
+<td>3000</td>
+<td>Web application</td>
+</tr>
+<tr>
+<td>PostgreSQL</td>
+<td>PostgreSQL 17</td>
+<td>5433</td>
+<td>Primary database</td>
+</tr>
+<tr>
+<td>Dragonfly</td>
+<td>Redis-compatible</td>
+<td>6380</td>
+<td>Scan result cache (24h TTL)</td>
+</tr>
+<tr>
+<td>NATS</td>
+<td>NATS 2.10</td>
+<td>4223</td>
+<td>Message queue (JetStream)</td>
+</tr>
+<tr>
+<td>Cron</td>
+<td>Node.js</td>
+<td>—</td>
+<td>Scheduled tasks (monitoring, alerts)</td>
+</tr>
+<tr>
+<td>nginx</td>
+<td>nginx:alpine</td>
+<td>80/443</td>
+<td>Reverse proxy, TLS termination</td>
+</tr>
+</tbody></table>
+<h3>NATS Message Flow</h3>
+<table>
+<thead>
+<tr>
+<th>Subject</th>
+<th>Publisher</th>
+<th>Consumer</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>scan.request</td>
+<td>API</td>
+<td>Worker</td>
+<td>New scan request</td>
+</tr>
+<tr>
+<td>scan.result.{hash}</td>
+<td>Worker</td>
+<td>API</td>
+<td>Completed scan result</td>
+</tr>
+<tr>
+<td>deepscan.request</td>
+<td>API</td>
+<td>Worker</td>
+<td>Deep scan request</td>
+</tr>
+<tr>
+<td>deepscan.cancel.{id}</td>
+<td>API</td>
+<td>Worker</td>
+<td>Cancel deep scan</td>
+</tr>
+<tr>
+<td>attacksurface.request</td>
+<td>API</td>
+<td>Worker</td>
+<td>Attack surface audit</td>
+</tr>
+<tr>
+<td>attacksurface.cancel.{id}</td>
+<td>API</td>
+<td>Worker</td>
+<td>Cancel audit</td>
+</tr>
+<tr>
+<td>attacksurface.progress.{id}</td>
+<td>Worker</td>
+<td>API</td>
+<td>Real-time audit progress</td>
+</tr>
+<tr>
+<td>offensive.request</td>
+<td>API</td>
+<td>Worker</td>
+<td>Offensive scan request</td>
+</tr>
+<tr>
+<td>offensive.cancel.{id}</td>
+<td>API</td>
+<td>Worker</td>
+<td>Cancel offensive scan</td>
+</tr>
+<tr>
+<td>offensive.progress.{id}</td>
+<td>Worker</td>
+<td>API</td>
+<td>Real-time scan logs</td>
+</tr>
+</tbody></table>
+<h3>Worker Concurrency</h3>
+<ul>
+<li>Configurable via WORKER_CONCURRENCY environment variable (default: 3)</li>
+<li>Controls the Playwright browser pool size</li>
+<li>NATS queue group <code>scan-workers</code> distributes requests across multiple worker instances</li>
+<li>Each subscription worker has auto-restart with exponential backoff (2s to 30s)</li>
+<li>Graceful shutdown: SIGINT/SIGTERM drains NATS connections and closes browser pools</li>
+</ul>
+<h3>Docker Build</h3>
+<p>The worker uses a multi-stage Docker build (Dockerfile.offensive):</p>
+<ul>
+<li>Stage 1 (Go): Compiles 10 security tools (nuclei, subfinder, httpx, katana, naabu, dalfox, ffuf, gitleaks, subjack, s3scanner)</li>
+<li>Stage 2 (Python): Installs 7 tools (sqlmap, xsstrike, xsrfprobe, graphql-cop, wfuzz, jwt_tool, SSRFmap)</li>
+<li>Stage 3 (Alpine): Clones PayloadsAllTheThings and curated SecLists subset (~200MB instead of full 1GB+)</li>
+<li>Stage 4 (Runtime): Node.js 22 slim with Playwright Chromium, all tools copied from previous stages</li>
+</ul>
+<p>Tools degrade gracefully if missing: each scanner checks tool availability via <code>isBinaryAvailable()</code> and falls back to built-in payloads.</p>
+<h3>Database</h3>
+<p>30 PostgreSQL migrations in infra/migrations/ (001 through 030) covering: users, scans, watchlists, teams, reports, API keys, scan history, bulk jobs, radar events, user profiles, badges, social feed, comments/likes, follows, collections, leaderboard, domain verifications, deep scans, monitoring, OTPs, attack surface audits, notification preferences, showcase scans, watchlist alerts, lead intelligence, traffic history, AI visibility, schema optimizations, AI summary pairing, and offensive scans.</p>
+<hr>
+<h2>Dashboard Pages (63 Total)</h2>
+<h3>Authentication (5 pages)</h3>
+<p>Login, register, verify email OTP, reset password, main dashboard home</p>
+<h3>Scan and Analysis (7 pages)</h3>
+<p>Quick scan, scan result detail, verified domains list, domain detail, compare two domains, bulk CSV scanning, AI visibility checks</p>
+<h3>Security (6 pages)</h3>
+<p>Attack surface launcher, audit result (unified deep + probe), active audit terminal, deep scan results, offensive scan launcher, offensive scan results</p>
+<h3>Monitoring (5 pages)</h3>
+<p>Monitoring hub, uptime monitoring, SSL certificate monitoring, speed/Core Web Vitals monitoring, scan history timeline</p>
+<h3>Intelligence (4 pages)</h3>
+<p>Lead search with filters, individual lead domain profile, competitor tracking, technology radar</p>
+<h3>Workspace (8 pages)</h3>
+<p>Collections list, collection detail, watchlist management, watchlist detail with change timeline, saved reports, compliance audit, issues aggregated across domains, notification center</p>
+<h3>Account (6 pages)</h3>
+<p>User profile with badges, account settings, API key management, billing and plan management, webhook setup, community leaderboard</p>
+<h3>Public/Marketing (22 pages)</h3>
+<p>Homepage, pricing, blog (4 articles), contact, privacy policy, security/disclosure, Chrome extension, terms, legal, cookies, developer docs, alternative comparison pages (BuiltWith, Wappalyzer, SecurityHeaders, SimilarWeb), public user profile, public domain scan page, public report page</p>
+<hr>
+<h2>Feature Coverage by Surface</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>API</th>
+<th>Dashboard</th>
+<th>CLI</th>
+<th>MCP</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Quick scan</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Deep scan</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Attack surface audit</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Offensive scanning</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Enrichment</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Bulk scan</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Scan history</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Domain verification</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Domain listing</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Uptime monitoring</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>SSL monitoring</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Speed monitoring</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Report generation</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Cancel scans</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Lead search</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Compliance</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>AI visibility</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Carbon footprint</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>(in scan)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>DNS security check</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>(in scan)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Security headers</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>(in scan)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Exposed files</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>(in scan)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Subdomain enumeration</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>(in attack-surface)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Website comparison</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Watchlists</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Collections</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Competitors</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Issues tracker</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Webhooks</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Notifications</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Leaderboard/badges</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Radar</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>User profiles/social</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Billing/checkout</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Scheduled reports</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Account status</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Setup diagnostics</td>
+<td>No</td>
+<td>No</td>
+<td>Yes (doctor)</td>
+<td>No</td>
+</tr>
+</tbody></table>
+<p>Items marked &quot;No&quot; for CLI/MCP are intentionally excluded — they are visual, interactive, or one-time-setup features that only make sense in the dashboard.</p>
+<hr>
+<h2>GitHub Actions Integration</h2>
+<p>OwnSurface provides a GitHub Action at <code>.github/actions/xray-scan/</code> for CI/CD pipeline integration.</p>
+<h3>Usage</h3>
+<pre><code class="language-yaml">- name: Security Scan
+  uses: ./.github/actions/xray-scan
+  with:
+    url: &quot;https://myapp.com&quot;
+    api-key: ${{ secrets.OWNSURFACE_API_KEY }}
+    fail-on: &quot;critical&quot;
+    format: &quot;sarif&quot;
+</code></pre>
+<h3>Outputs</h3>
+<ul>
+<li>findings-count: Total number of security findings</li>
+<li>critical-count: Number of critical findings</li>
+<li>high-count: Number of high findings</li>
+<li>sarif-file: Path to SARIF output file (for GitHub Advanced Security upload)</li>
+</ul>
+<h3>How It Works</h3>
+<p>The action runs in a Docker container with @ownsurface/cli installed globally. It executes <code>ownsurface scan</code> with JSON output, parses finding counts, optionally generates a SARIF file, and exits with code 1 if findings at or above the --fail-on severity threshold.</p>
+<hr>
+<h2>Mascot: Ray the Stingray</h2>
+<p>OwnSurface&#39;s mascot is Ray, a stingray that represents &quot;seeing through surfaces.&quot; Ray appears in the CLI with five states:</p>
+<ul>
+<li>Idle: White eyes, shown on welcome screen with blinking animation</li>
+<li>Blink: Eyes close briefly every 1.2-2 seconds (randomized for natural feel)</li>
+<li>Scanning: Yellow eyes with beam ())) and arrows (&gt;&gt;&gt;) — shown during active scans</li>
+<li>Found: Red eyes with warning symbol — shown when vulnerabilities detected</li>
+<li>Happy: Green smiling eyes with checkmark — shown on clean scan results</li>
+<li>Compact: One-line face for scan output headers</li>
+</ul>
+<p>The blinking animation only runs in TTY terminals. In piped/CI output, Ray is rendered as a static image.</p>
+<hr>
+<h2>Environment Variables</h2>
+<h3>Required</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DATABASE_URL</td>
+<td>PostgreSQL connection string</td>
+</tr>
+<tr>
+<td>DRAGONFLY_URL</td>
+<td>Redis-compatible cache URL</td>
+</tr>
+<tr>
+<td>NATS_URL</td>
+<td>NATS message queue URL</td>
+</tr>
+<tr>
+<td>JWT_SECRET</td>
+<td>JWT signing key</td>
+</tr>
+<tr>
+<td>OTP_HMAC_SECRET</td>
+<td>OTP code generation key</td>
+</tr>
+</tbody></table>
+<h3>Payment (Stripe)</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>STRIPE_SECRET_KEY</td>
+<td>Stripe API key</td>
+</tr>
+<tr>
+<td>STRIPE_WEBHOOK_SECRET</td>
+<td>Stripe webhook signature verification</td>
+</tr>
+<tr>
+<td>STRIPE_ALLOWED_PRICE_IDS</td>
+<td>Allowed subscription price IDs</td>
+</tr>
+</tbody></table>
+<h3>Email (Brevo)</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BREVO_API_KEY</td>
+<td>Email delivery API key</td>
+</tr>
+<tr>
+<td>BREVO_FROM_EMAIL</td>
+<td>Sender email (default: <a href="mailto:no-reply@ownsurface.com">no-reply@ownsurface.com</a>)</td>
+</tr>
+<tr>
+<td>BREVO_FROM_NAME</td>
+<td>Sender name (default: OwnSurface)</td>
+</tr>
+</tbody></table>
+<h3>AI</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AWS_REGION</td>
+<td>AWS region for Bedrock</td>
+</tr>
+<tr>
+<td>AWS_ACCESS_KEY_ID</td>
+<td>AWS credentials</td>
+</tr>
+<tr>
+<td>AWS_SECRET_ACCESS_KEY</td>
+<td>AWS credentials</td>
+</tr>
+<tr>
+<td>AWS_BEDROCK_REGION</td>
+<td>Bedrock region (default: us-east-1)</td>
+</tr>
+<tr>
+<td>ENABLE_AI_SUMMARY</td>
+<td>Enable AI summaries (true/false)</td>
+</tr>
+</tbody></table>
+<h3>Worker</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>WORKER_CONCURRENCY</td>
+<td>Browser pool size (default: 3)</td>
+</tr>
+<tr>
+<td>OFFENSIVE_TOOLS_ENABLED</td>
+<td>Enable offensive scanning (true/false)</td>
+</tr>
+</tbody></table>
+<h3>Frontend</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>NEXT_PUBLIC_API_URL</td>
+<td>API base URL for dashboard</td>
+</tr>
+<tr>
+<td>NEXT_PUBLIC_APP_URL</td>
+<td>Application URL</td>
+</tr>
+<tr>
+<td>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</td>
+<td>Stripe public key</td>
+</tr>
+</tbody></table>
+<h3>CLI / MCP</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OWNSURFACE_API_KEY</td>
+<td>API key for CLI and MCP authentication</td>
+</tr>
+<tr>
+<td>OWNSURFACE_API_URL</td>
+<td>Override API base URL (default: <a href="https://api.ownsurface.com">https://api.ownsurface.com</a>)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Package Structure</h2>
+<pre><code>ownsurface/
+  apps/
+    api/           Rust API server (Axum, sqlx, NATS)
+    dashboard/     Next.js 16 web application
+    worker/        Node.js scan worker (Playwright, 51 scanner modules)
+    extension/     Chrome extension (React, Vite, Manifest V3)
+    cron/          Scheduled task runner
+  packages/
+    cli/           @ownsurface/cli — terminal CLI (23 commands)
+    mcp-server/    @ownsurface/mcp-server — MCP server (28 tools)
+    types/         Shared TypeScript types (ScanResult, etc.)
+    ui/            Shared React components (Radix UI, CVA)
+  infra/
+    docker-compose.yml       Development services
+    docker-compose.prod.yml  Production services
+    migrations/              PostgreSQL migrations (001-030)
+    migrate.sh               Migration runner
+    nginx.conf               Reverse proxy config
+  .github/
+    actions/xray-scan/       GitHub Action for CI/CD
+</code></pre>
+<hr>
+<p><em>OwnSurface v1.0.0 — See through any website.</em></p>
+
+</body></html>

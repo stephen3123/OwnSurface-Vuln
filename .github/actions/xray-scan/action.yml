@@ -1,0 +1,48 @@
+name: "OwnSurface Security Scan"
+description: "Scan a URL for security vulnerabilities and gate deployments based on findings"
+author: "OwnSurface"
+
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  url:
+    description: "URL to scan"
+    required: true
+  api-key:
+    description: "OwnSurface API key"
+    required: true
+  fail-on:
+    description: "Fail if findings at or above severity: critical, high, medium, low"
+    required: false
+    default: "critical"
+  checks:
+    description: "Comma-separated list of checks: sqli, xss, csrf, ssrf, auth"
+    required: false
+  format:
+    description: "Output format: table, json, sarif"
+    required: false
+    default: "sarif"
+
+outputs:
+  findings-count:
+    description: "Total number of security findings"
+  critical-count:
+    description: "Number of critical findings"
+  high-count:
+    description: "Number of high findings"
+  sarif-file:
+    description: "Path to SARIF output file"
+  scan-url:
+    description: "URL to the full scan results on OwnSurface dashboard"
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  args:
+    - ${{ inputs.url }}
+    - ${{ inputs.api-key }}
+    - ${{ inputs.fail-on }}
+    - ${{ inputs.format }}
+    - ${{ inputs.checks }}

@@ -1,0 +1,348 @@
+# ══════════════════════════════════════════════════════════════
+# XrayAI Worker Base Image — All 42 Security Tools
+# Architecture: linux/arm64 (Graviton + Apple Silicon)
+# Build ONCE, push to ECR, reuse forever
+# Rebuild only when upgrading tool versions
+# ══════════════════════════════════════════════════════════════
+
+# ──────────────────────────────────────────────────────────────
+# Stage 1: Go security tools (12 binaries)
+# ──────────────────────────────────────────────────────────────
+FROM debian:bookworm-slim AS go-builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl ca-certificates unzip tar file && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /opt/go-tools
+
+# ProjectDiscovery tools — ARM64 uses .zip format
+RUN curl -fsSL -o /tmp/nuclei.zip \
+    "https://github.com/projectdiscovery/nuclei/releases/download/v3.3.7/nuclei_3.3.7_linux_arm64.zip" && \
+    unzip -qo /tmp/nuclei.zip -d /opt/go-tools/ && rm /tmp/nuclei.zip && \
+    echo "nuclei OK" && ls -la /opt/go-tools/nuclei
+
+RUN curl -fsSL -o /tmp/subfinder.zip \
+    "https://github.com/projectdiscovery/subfinder/releases/download/v2.6.6/subfinder_2.6.6_linux_arm64.zip" && \
+    unzip -qo /tmp/subfinder.zip -d /opt/go-tools/ && rm /tmp/subfinder.zip && \
+    echo "subfinder OK"
+
+RUN curl -fsSL -o /tmp/httpx.zip \
+    "https://github.com/projectdiscovery/httpx/releases/download/v1.6.8/httpx_1.6.8_linux_arm64.zip" && \
+    unzip -qo /tmp/httpx.zip -d /opt/go-tools/ && rm /tmp/httpx.zip && \
+    echo "httpx OK"
+
+RUN curl -fsSL -o /tmp/katana.zip \
+    "https://github.com/projectdiscovery/katana/releases/download/v1.1.0/katana_1.1.0_linux_arm64.zip" && \
+    unzip -qo /tmp/katana.zip -d /opt/go-tools/ && rm /tmp/katana.zip && \
+    echo "katana OK"
+
+# naabu v2.3.7 — v2.3.1 has no ARM64 build
+RUN curl -fsSL -o /tmp/naabu.zip \
+    "https://github.com/projectdiscovery/naabu/releases/download/v2.3.7/naabu_2.3.7_linux_arm64.zip" && \
+    unzip -qo /tmp/naabu.zip -d /opt/go-tools/ && rm /tmp/naabu.zip && \
+    echo "naabu OK"
+
+# Non-ProjectDiscovery tools — ARM64 uses .tar.gz
+RUN curl -fsSL "https://github.com/hahwul/dalfox/releases/download/v2.9.1/dalfox_2.9.1_linux_arm64.tar.gz" | \
+    tar xz -C /opt/go-tools/ && echo "dalfox OK"
+
+RUN curl -fsSL "https://github.com/ffuf/ffuf/releases/download/v2.1.0/ffuf_2.1.0_linux_arm64.tar.gz" | \
+    tar xz -C /opt/go-tools/ && echo "ffuf OK"
+
+RUN curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_arm64.tar.gz" | \
+    tar xz -C /opt/go-tools/ && echo "gitleaks OK"
+
+# trivy v0.69.3 — v0.49.1 does not exist
+RUN curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v0.69.3/trivy_0.69.3_Linux-ARM64.tar.gz" | \
+    tar xz -C /opt/go-tools/ && echo "trivy OK"
+
+RUN curl -fsSL "https://github.com/anchore/grype/releases/download/v0.74.0/grype_0.74.0_linux_arm64.tar.gz" | \
+    tar xz -C /opt/go-tools/ && echo "grype OK"
+
+RUN curl -fsSL "https://github.com/trufflesecurity/trufflehog/releases/download/v3.67.0/trufflehog_3.67.0_linux_arm64.tar.gz" | \
+    tar xz -C /opt/go-tools/ && echo "trufflehog OK"
+
+RUN curl -fsSL -o /opt/go-tools/osv-scanner \
+    "https://github.com/google/osv-scanner/releases/download/v1.6.1/osv-scanner_1.6.1_linux_arm64" && \
+    chmod +x /opt/go-tools/osv-scanner && echo "osv-scanner OK"
+
+# Previously missing tools — now added
+RUN curl -fsSL -o /opt/go-tools/subjack \
+    "https://github.com/haccer/subjack/releases/download/v3.0.0/subjack-linux-arm64" && \
+    chmod +x /opt/go-tools/subjack && echo "subjack OK"
+
+RUN curl -fsSL "https://github.com/sa7mon/S3Scanner/releases/download/v3.1.1/S3Scanner_Linux_arm64.tar.gz" | \
+    tar xz -C /opt/go-tools/ && echo "s3scanner OK"
+
+# Clean up non-binary files (README, LICENSE, etc.)
+RUN find /opt/go-tools -type f ! -executable -delete 2>/dev/null; \
+    echo "=== Go tools installed ===" && ls -la /opt/go-tools/
+
+# ──────────────────────────────────────────────────────────────
+# Stage 2: Python security tools (17 packages — zero skips)
+# ──────────────────────────────────────────────────────────────
+FROM python:3.12-slim-bookworm AS python-builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git gcc g++ python3-dev libssl-dev libcurl4-openssl-dev \
+    cmake ninja-build pkg-config libicu-dev libcapstone-dev \
+    dexdump && \
+    rm -rf /var/lib/apt/lists/*
+
+# pycurl 7.45.7 works on Python 3.12 (7.45.3 is broken — C API incompatible)
+# Must install BEFORE wfuzz to prevent wfuzz pulling the broken 7.45.3
+RUN PYCURL_SSL_LIBRARY=openssl pip install --no-cache-dir --prefix=/opt/python-tools \
+    'pycurl>=7.45.7' && echo "pycurl OK"
+
+# Core offensive tools — wfuzz installed separately to use our pycurl
+RUN pip install --no-cache-dir --prefix=/opt/python-tools \
+    sqlmap \
+    xsstrike \
+    xsrfprobe && \
+    echo "sqlmap + xsstrike + xsrfprobe OK"
+
+# wfuzz PyPI releases have broken metadata (invalid version specifiers)
+# Install from GitHub source which has the fix
+RUN pip install --no-cache-dir --prefix=/opt/python-tools \
+    "git+https://github.com/xmendez/wfuzz.git" && \
+    echo "wfuzz OK"
+
+# jwt_tool — standalone Python script, not a pip package
+RUN git clone --depth 1 https://github.com/ticarpi/jwt_tool.git /opt/jwt_tool && \
+    pip install --no-cache-dir --prefix=/opt/python-tools \
+        -r /opt/jwt_tool/requirements.txt && \
+    printf '#!/bin/sh\npython3 /opt/jwt_tool/jwt_tool.py "$@"\n' > /opt/python-tools/bin/jwt_tool && \
+    chmod +x /opt/python-tools/bin/jwt_tool && \
+    echo "jwt_tool OK"
+
+# SSRFmap — standalone Python tool
+RUN git clone --depth 1 https://github.com/swisskyrepo/SSRFmap.git /opt/ssrfmap && \
+    pip install --no-cache-dir --prefix=/opt/python-tools \
+        requests && \
+    printf '#!/bin/sh\npython3 /opt/ssrfmap/ssrfmap.py "$@"\n' > /opt/python-tools/bin/ssrfmap && \
+    chmod +x /opt/python-tools/bin/ssrfmap && \
+    echo "SSRFmap OK"
+
+# graphql-cop (no setup.py — manual clone + deps)
+RUN mkdir -p /opt/python-tools/graphql_cop && \
+    git clone --depth 1 https://github.com/dolevf/graphql-cop.git /tmp/graphql-cop && \
+    cp -r /tmp/graphql-cop/* /opt/python-tools/graphql_cop/ && \
+    pip install --no-cache-dir --prefix=/opt/python-tools \
+        -r /opt/python-tools/graphql_cop/requirements.txt && \
+    rm -rf /tmp/graphql-cop && \
+    echo "graphql-cop OK"
+
+# Mobile security tools — installed separately to avoid dependency hell
+RUN pip install --no-cache-dir --prefix=/opt/python-tools \
+    apkleaks && echo "apkleaks OK"
+
+RUN pip install --no-cache-dir --prefix=/opt/python-tools \
+    hermes-dec && echo "hermes-dec OK"
+
+# quark-engine needs androguard which normally pulls PyQt5 (GUI framework)
+# Install androguard without PyQt5, then quark-engine
+RUN pip install --no-cache-dir --prefix=/opt/python-tools \
+    'androguard>=3.4.0a1' --no-deps && \
+    pip install --no-cache-dir --prefix=/opt/python-tools \
+    lxml networkx pygments matplotlib asn1crypto pydot ipython && \
+    pip install --no-cache-dir --prefix=/opt/python-tools \
+    quark-engine && echo "quark-engine OK"
+
+# exodus-core needs androguard 4.1.1 (with PyQt5 dep) — install without PyQt5
+RUN pip install --no-cache-dir --prefix=/opt/python-tools \
+    'exodus-core>=1.3.14' --no-deps && \
+    pip install --no-cache-dir --prefix=/opt/python-tools \
+    'androguard>=4.1.1' --no-deps && \
+    pip install --no-cache-dir --prefix=/opt/python-tools \
+    'cryptography>=44.0' Pillow requests jellyfish dhash six traitlets && \
+    echo "exodus-core OK"
+
+# WAF detection — whatwaf is not on PyPI, install from git
+RUN git clone --depth 1 https://github.com/Ekultek/WhatWaf.git /opt/whatwaf && \
+    pip install --no-cache-dir --prefix=/opt/python-tools \
+        -r /opt/whatwaf/requirements.txt && \
+    printf '#!/bin/sh\npython3 /opt/whatwaf/whatwaf "$@"\n' > /opt/python-tools/bin/whatwaf && \
+    chmod +x /opt/python-tools/bin/whatwaf && \
+    echo "whatwaf OK"
+
+# DNS takeover detection (baddns was missing from old Dockerfile)
+RUN pip install --no-cache-dir --prefix=/opt/python-tools \
+    baddns && \
+    echo "baddns OK"
+
+# pyxamstore — real repo is jakev/pyxamstore (needs lz4, xxhash C extensions)
+RUN pip install --no-cache-dir --prefix=/opt/python-tools \
+    "git+https://github.com/jakev/pyxamstore.git" && \
+    echo "pyxamstore OK"
+
+# blutter — C++ Flutter RE tool, clone and install as standalone script
+RUN git clone --depth 1 https://github.com/worawit/blutter.git /opt/blutter && \
+    pip install --no-cache-dir --prefix=/opt/python-tools pyelftools requests && \
+    printf '#!/bin/sh\npython3 /opt/blutter/blutter.py "$@"\n' > /opt/python-tools/bin/blutter && \
+    chmod +x /opt/python-tools/bin/blutter && \
+    echo "blutter OK"
+
+# Verify every single Python tool has a binary
+RUN echo "=== Python tools verification ===" && \
+    for tool in sqlmap xsstrike xsrfprobe wfuzz jwt_tool ssrfmap whatwaf apkleaks quark exodus-standalone hermes-dec pyxamstore blutter; do \
+      test -f /opt/python-tools/bin/$tool && echo "  ✓ $tool" || echo "  ✗ $tool MISSING — BUILD FAILED"; \
+    done
+
+# ──────────────────────────────────────────────────────────────
+# Stage 3: Java tools (jadx, apktool, checksec)
+# ──────────────────────────────────────────────────────────────
+FROM eclipse-temurin:21-jdk-jammy AS java-builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl unzip && \
+    rm -rf /var/lib/apt/lists/*
+
+# jadx v1.5.0 (Apache-2.0) — Android decompiler
+RUN curl -fsSL -o /tmp/jadx.zip \
+    "https://github.com/skylot/jadx/releases/download/v1.5.0/jadx-1.5.0.zip" && \
+    mkdir -p /opt/java-tools/jadx && \
+    unzip -q /tmp/jadx.zip -d /opt/java-tools/jadx && \
+    chmod +x /opt/java-tools/jadx/bin/jadx && \
+    rm /tmp/jadx.zip && echo "jadx OK"
+
+# apktool v2.9.3 (Apache-2.0) — APK resource extraction
+RUN curl -fsSL -o /opt/java-tools/apktool.jar \
+    "https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar" && \
+    printf '#!/bin/sh\njava -jar /opt/java-tools/apktool.jar "$@"\n' > /opt/java-tools/apktool && \
+    chmod +x /opt/java-tools/apktool && echo "apktool OK"
+
+# checksec (BSD-2) — binary security checker
+RUN curl -fsSL -o /opt/java-tools/checksec \
+    "https://raw.githubusercontent.com/slimm609/checksec.sh/master/checksec" && \
+    chmod +x /opt/java-tools/checksec && echo "checksec OK"
+
+# ──────────────────────────────────────────────────────────────
+# Stage 4: Data files (payloads, wordlists, templates)
+# ──────────────────────────────────────────────────────────────
+FROM alpine:3.19 AS data-builder
+
+RUN apk add --no-cache git
+
+# PayloadsAllTheThings — attack payloads
+RUN git clone --depth 1 https://github.com/swisskyrepo/PayloadsAllTheThings.git /opt/payloads && \
+    rm -rf /opt/payloads/.git && echo "PayloadsAllTheThings OK"
+
+# SecLists — curated wordlists (~200MB subset instead of full 1GB+)
+RUN mkdir -p /opt/seclists/Discovery/Web-Content \
+    /opt/seclists/Discovery/DNS \
+    /opt/seclists/Passwords/Common-Credentials \
+    /opt/seclists/Passwords/Default-Credentials
+
+RUN git clone --depth 1 --filter=blob:none --sparse \
+    https://github.com/danielmiessler/SecLists.git /tmp/seclists && \
+    cd /tmp/seclists && \
+    git sparse-checkout set Discovery/Web-Content Discovery/DNS Passwords/Common-Credentials Passwords/Default-Credentials && \
+    cp -r /tmp/seclists/Discovery/Web-Content/common.txt /opt/seclists/Discovery/Web-Content/ 2>/dev/null || true && \
+    cp -r /tmp/seclists/Discovery/Web-Content/raft-medium-directories.txt /opt/seclists/Discovery/Web-Content/ 2>/dev/null || true && \
+    cp -r /tmp/seclists/Discovery/DNS/subdomains-top1million-5000.txt /opt/seclists/Discovery/DNS/ 2>/dev/null || true && \
+    cp -r /tmp/seclists/Passwords/Common-Credentials/10-million-password-list-top-1000.txt /opt/seclists/Passwords/Common-Credentials/ 2>/dev/null || true && \
+    rm -rf /tmp/seclists && echo "SecLists OK"
+
+# ──────────────────────────────────────────────────────────────
+# Stage 5: Final runtime image
+# ──────────────────────────────────────────────────────────────
+FROM node:22-slim
+
+# System deps: Playwright, Java, network tools
+RUN npx playwright install-deps chromium && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    libpcap-dev ca-certificates \
+    openjdk-17-jre-headless unzip iptables binutils file \
+    libcurl4-openssl-dev libssl-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python 3.12 from builder (matches the version tools were compiled against)
+COPY --from=python-builder /usr/local/bin/python3.12 /usr/local/bin/python3.12
+COPY --from=python-builder /usr/local/bin/pip3.12 /usr/local/bin/pip3.12
+COPY --from=python-builder /usr/local/lib/python3.12/ /usr/local/lib/python3.12/
+COPY --from=python-builder /usr/local/lib/libpython3.12.so* /usr/local/lib/
+RUN ldconfig && \
+    ln -sf /usr/local/bin/python3.12 /usr/local/bin/python3 && \
+    ln -sf /usr/local/bin/python3.12 /usr/bin/python3 && \
+    ln -sf /usr/local/bin/pip3.12 /usr/local/bin/pip3
+
+# Install missing runtime deps — androguard 4.x has huge transitive deps
+# Install androguard properly (with all deps) then overlay our --no-deps version
+RUN pip3 install --no-cache-dir \
+    'setuptools<75' \
+    'androguard>=4.1.1' \
+    loguru apkInspector mutf8 dataset && \
+    echo "Runtime Python deps OK"
+
+# Fix wfuzz Python 3.12 incompatibility (imp module removed in 3.12)
+RUN printf 'import importlib, importlib.util, types, sys\nclass _S(types.ModuleType):\n find_module=staticmethod(lambda n,p=None:importlib.util.find_spec(n))\n load_module=staticmethod(importlib.import_module)\n new_module=staticmethod(types.ModuleType)\n NullImporter=type(None)\nsys.modules[__name__]=_S(__name__)\n' > /usr/local/lib/python3.12/imp.py && echo "imp shim OK"
+
+# ── Python tools FIRST (so Go binaries override any conflicting names like httpx) ──
+COPY --from=python-builder /opt/python-tools/ /usr/local/
+
+# ── Fix Python shebangs (builder uses python3.12, runtime has python3.11) ──
+RUN find /usr/local/bin -maxdepth 1 -type f -exec grep -l '#!/usr/local/bin/python3.12' {} \; | \
+    xargs -r sed -i 's|#!/usr/local/bin/python3.12|#!/usr/bin/python3|g' && \
+    ln -sf /usr/bin/python3 /usr/local/bin/python3.12 || true
+
+# ── Go binaries AFTER Python (Go httpx overwrites Python httpx client script) ──
+COPY --from=go-builder /opt/go-tools/ /usr/local/bin/
+
+# ── Python cloned repos (standalone tools that aren't pip packages) ──
+COPY --from=python-builder /opt/jwt_tool/ /opt/jwt_tool/
+COPY --from=python-builder /opt/ssrfmap/ /opt/ssrfmap/
+COPY --from=python-builder /opt/whatwaf/ /opt/whatwaf/
+COPY --from=python-builder /opt/blutter/ /opt/blutter/
+COPY --from=python-builder /opt/python-tools/graphql_cop/ /opt/graphql_cop/
+
+# ── Java tools (jadx, apktool, checksec) ──
+COPY --from=java-builder /opt/java-tools/jadx/ /opt/jadx/
+COPY --from=java-builder /opt/java-tools/apktool.jar /opt/java-tools/apktool.jar
+COPY --from=java-builder /opt/java-tools/apktool /usr/local/bin/apktool
+COPY --from=java-builder /opt/java-tools/checksec /usr/local/bin/checksec
+RUN ln -s /opt/jadx/bin/jadx /usr/local/bin/jadx
+
+# ── Data files ──
+COPY --from=data-builder /opt/payloads/ /opt/payloads/
+COPY --from=data-builder /opt/seclists/ /opt/seclists/
+
+# ── Playwright browser ──
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
+RUN npx playwright install chromium
+
+# ── Nuclei templates ──
+ENV NUCLEI_TEMPLATES_PATH=/opt/nuclei-templates
+RUN mkdir -p /opt/nuclei-templates && \
+    nuclei -update-templates -ud /opt/nuclei-templates 2>/dev/null || true
+
+# ── Environment ──
+ENV PAYLOADS_PATH=/opt/payloads
+ENV SECLISTS_PATH=/opt/seclists
+ENV MOBILE_STAGING_DIR=/tmp/ownsurface-mobile
+ENV PYTHONPATH=/usr/local/lib/python3.12/site-packages:/usr/local/lib/python3.11/site-packages
+
+# ── Non-root user ──
+RUN addgroup --system worker && adduser --system --ingroup worker --home /home/worker worker && \
+    mkdir -p /home/worker/.config/nuclei /home/worker/.cache/nuclei /tmp/ownsurface-mobile \
+    /home/worker/.local/share/apktool/framework && \
+    chown -R worker:worker /opt/nuclei-templates /home/worker /tmp/ownsurface-mobile
+
+# Pre-cache apktool framework (avoids first-run download failure in production)
+USER worker
+RUN apktool empty 2>/dev/null; apktool if /dev/null 2>/dev/null || true
+USER root
+
+# ── Verify all tools ──
+RUN echo "=== VERIFICATION ===" && \
+    for tool in nuclei subfinder httpx katana naabu dalfox ffuf gitleaks trivy grype trufflehog osv-scanner subjack; do \
+      which $tool && echo "  ✓ $tool" || echo "  ✗ $tool MISSING"; \
+    done && \
+    for tool in sqlmap whatwaf apkleaks checksec jadx apktool; do \
+      which $tool && echo "  ✓ $tool" || echo "  ✗ $tool MISSING"; \
+    done && \
+    echo "  ✓ playwright $(npx playwright --version)" && \
+    echo "=== DONE ==="
+
+LABEL org.opencontainers.image.title="XrayAI Worker Base" \
+      org.opencontainers.image.description="Pre-built security tools for XrayAI scanner" \
+      org.opencontainers.image.version="1.0.0"

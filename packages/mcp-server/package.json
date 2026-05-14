@@ -1,0 +1,43 @@
+{
+  "name": "@ownsurface/mcp-server",
+  "version": "2.1.0",
+  "description": "OwnSurface MCP Server — Website intelligence for AI agents. Tech stack, security, SEO, company data from any URL.",
+  "type": "module",
+  "bin": {
+    "ownsurface-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ownsurface",
+    "website-intelligence",
+    "tech-stack",
+    "security",
+    "clearbit-alternative"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
+

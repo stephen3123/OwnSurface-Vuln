@@ -1,0 +1,251 @@
+name: xrayai
+
+x-ecr: &ecr-registry 363076774198.dkr.ecr.ap-south-1.amazonaws.com
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: xrayai-postgres
+    environment:
+      POSTGRES_USER: xrayai
+      POSTGRES_PASSWORD: xrayai
+      POSTGRES_DB: xrayai
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - xrayai_postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - xrayai-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U xrayai"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    container_name: xrayai-dragonfly
+    command: ["--maxmemory", "512mb", "--proactor_threads", "1"]
+    ports:
+      - "127.0.0.1:6380:6379"
+    volumes:
+      - xrayai_dragonfly_data:/data
+    networks:
+      - xrayai-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: xrayai-nats
+    ports:
+      - "127.0.0.1:4223:4222"
+      - "127.0.0.1:8223:8222"
+    command: ["--js", "--sd", "/data", "-m", "8222"]
+    volumes:
+      - xrayai_nats_data:/data
+    networks:
+      - xrayai-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  api:
+    image: ${ECR_REGISTRY:-363076774198.dkr.ecr.ap-south-1.amazonaws.com}/xrayai/api:latest
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    container_name: xrayai-api
+    ports:
+      - "8080:8080"
+    volumes:
+      - mobile_staging:/tmp/ownsurface-mobile
+      - ~/.aws:/home/api/.aws:ro
+    environment:
+      DATABASE_URL: postgresql://xrayai:xrayai@postgres:5432/xrayai
+      DRAGONFLY_URL: redis://dragonfly:6379
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      RUST_ENV: ${RUST_ENV:-development}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_ALLOWED_PRICE_IDS: ${STRIPE_ALLOWED_PRICE_IDS:-}
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      BREVO_FROM_EMAIL: ${BREVO_FROM_EMAIL:-no-reply@ownsurface.com}
+      BREVO_FROM_NAME: ${BREVO_FROM_NAME:-OwnSurface}
+      OTP_HMAC_SECRET: ${OTP_HMAC_SECRET:?OTP_HMAC_SECRET must be set}
+      OTP_TTL_SECONDS: ${OTP_TTL_SECONDS:-600}
+      OTP_RESEND_COOLDOWN_SECONDS: ${OTP_RESEND_COOLDOWN_SECONDS:-60}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      SESSION_COOKIE_SAME_SITE: ${SESSION_COOKIE_SAME_SITE:-lax}
+      SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_BEDROCK_REGION: ${AWS_BEDROCK_REGION:-us-east-1}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      PORT: "8080"
+      RUST_LOG: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dragonfly:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    networks:
+      - xrayai-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  worker:
+    image: ${ECR_REGISTRY:-363076774198.dkr.ecr.ap-south-1.amazonaws.com}/xrayai/worker:latest
+    build:
+      context: ../apps/worker
+      dockerfile: Dockerfile
+    container_name: xrayai-worker
+    volumes:
+      - mobile_staging:/tmp/ownsurface-mobile
+      - ~/.aws:/home/worker/.aws:ro
+    environment:
+      NATS_URL: nats://nats:4222
+      DATABASE_URL: postgresql://xrayai:xrayai@postgres:5432/xrayai
+      WORKER_CONCURRENCY: "3"
+      SCAN_TIMEOUT_MS: "600000"
+      ENABLE_AI_SUMMARY: ${ENABLE_AI_SUMMARY:-false}
+      OFFENSIVE_TOOLS_ENABLED: ${OFFENSIVE_TOOLS_ENABLED:-false}
+      AWS_BEDROCK_REGION: ${AWS_BEDROCK_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    networks:
+      - xrayai-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 3G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  cron:
+    image: ${ECR_REGISTRY:-363076774198.dkr.ecr.ap-south-1.amazonaws.com}/xrayai/cron:latest
+    build:
+      context: ../apps/cron
+      dockerfile: Dockerfile
+    container_name: xrayai-cron
+    volumes:
+      - ~/.aws:/home/cronworker/.aws:ro
+    environment:
+      NATS_URL: nats://nats:4222
+      DATABASE_URL: postgresql://xrayai:xrayai@postgres:5432/xrayai
+      DRAGONFLY_URL: redis://dragonfly:6379
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      BREVO_FROM_EMAIL: ${BREVO_FROM_EMAIL:-no-reply@ownsurface.com}
+      BREVO_FROM_NAME: ${BREVO_FROM_NAME:-OwnSurface}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_BEDROCK_REGION: ${AWS_BEDROCK_REGION:-us-east-1}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AI_VISIBILITY_DAILY_BUDGET_USD: ${AI_VISIBILITY_DAILY_BUDGET_USD:-10}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    networks:
+      - xrayai-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  dashboard:
+    image: ${ECR_REGISTRY:-363076774198.dkr.ecr.ap-south-1.amazonaws.com}/xrayai/dashboard:latest
+    build:
+      context: ../apps/dashboard
+      dockerfile: Dockerfile
+    container_name: xrayai-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+    networks:
+      - xrayai-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000',r=>{process.exit(r.statusCode===200?0:1)})\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  xrayai-net:
+    name: xrayai-net
+    driver: bridge
+
+volumes:
+  xrayai_postgres_data:
+    name: xrayai_postgres_data
+  xrayai_dragonfly_data:
+    name: xrayai_dragonfly_data
+  xrayai_nats_data:
+    name: xrayai_nats_data
+  mobile_staging:
+    name: xrayai_mobile_staging
